@@ -7,10 +7,11 @@ int main(int argc,char *argv[])
     EncodeInfo encInfo;
     
     if(check_operation_type(argv[1][1]) == e_encode){
-        //call read_and_validate_encode_args(argv,&encInfo); == e_success
-        /*
-            -> call do_encoding(&encInfo);
-        */
+        
+        if(read_and_validate_encode_args(argv,&encInfo) == e_failure)
+            return e_failure;
+        else
+            do_encoding(&encInfo);
     }
 
     return 0;

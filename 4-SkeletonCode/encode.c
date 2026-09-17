@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include<string.h>
 #include "encode.h"
 #include "types.h"
 
@@ -35,102 +36,82 @@ uint get_image_size_for_bmp(FILE *fptr_image)
  * Output: FILE pointer for above files
  * Return Value: e_success or e_failure, on file errors
  */
-Status open_files(EncodeInfo *encInfo)
-{
-    // Src Image file
-    encInfo->fptr_src_image = fopen(encInfo->src_image_fname, "r");
-    // Do Error handling
-    if (encInfo->fptr_src_image == NULL)
-    {
-    	perror("fopen");
-    	fprintf(stderr, "ERROR: Unable to open file %s\n", encInfo->src_image_fname);
 
-    	return e_failure;
-    }
-
-    // Secret file
-    encInfo->fptr_secret = fopen(encInfo->secret_fname, "r");
-    // Do Error handling
-    if (encInfo->fptr_secret == NULL)
-    {
-    	perror("fopen");
-    	fprintf(stderr, "ERROR: Unable to open file %s\n", encInfo->secret_fname);
-
-    	return e_failure;
-    }
-
-    // Stego Image file
-    encInfo->fptr_stego_image = fopen(encInfo->stego_image_fname, "w");
-    // Do Error handling
-    if (encInfo->fptr_stego_image == NULL)
-    {
-    	perror("fopen");
-    	fprintf(stderr, "ERROR: Unable to open file %s\n", encInfo->stego_image_fname);
-
-    	return e_failure;
-    }
-
-    // No failure return e_success
-    return e_success;
-}
 
 Status read_and_validate_encode_args(char *argv[], EncodeInfo *encInfo)
 {
-    /* check aggv[2] (beautiful.bmp) extension ->  check .bmp
-        if not , print error msg, return e_failue
-        if valid then go for opening file and further operation
+    
+    char *dot = strchr(argv[2],'.');        //source file extension validation
 
-        encInfo -> secret_fname = argv[3];
+    if(dot==NULL || (strcmp(dot,".bmp") != 0)){     
+        printf("Error : Source image file must be .bmp file\n");
+        return e_failure;
+    }
 
-        if(argv[4]==NUll)
-            encInfo -> stego_image_fname = "output.bmp"
-        else
-            * validate argv[4] is ".bmp" *
-                => if not ,print error msg, return e_failue
-            * encInfo -> stego_image_fname =  argv[4]
-    */
-    open_files(encInfo);
+    encInfo->src_image_fname = argv[2];     //storing src file name 
+
+    encInfo->secret_fname = argv[3];        //storing secret file name
+
+    if(argv[4]==NULL){                      //storing output/stego file name
+        encInfo->stego_image_fname = "output.bmp";
+    }
+    else{
+        dot = strchr(argv[4],'.');          //output file extension validation
+
+        if(dot==NULL || (strcmp(dot,".bmp") != 0)){
+            printf("Error : Output file must be .bmp file\n");
+            return e_failure;
+        }
+
+        encInfo->stego_image_fname = argv[4];
+    }
+
+    if(open_files(encInfo) == e_failure){
+        printf("File not opened\n");
+        return e_failure;
+    }
+    
+    return e_success;
 }
 
 Status open_files(EncodeInfo *encInfo)
 {
-    /*
-    -> open 'encInfo -> src_image_fname' file in read mode
-        if(file not opened) -> print error and return e_failure
-    
-        *SAME CODE*
-    
-    FILE *fptr_src_image = encInfo->src_image_fname;
-
-    if(fptr_src_image == NULL){
-        printf("Error");
+    //Src file open
+    encInfo->fptr_src_image = fopen(encInfo->src_image_fname,"r");    
+    if(encInfo->fptr_src_image == NULL){
+        printf("Error : Src file not opened\n");
         return e_failure;
     }
-    
 
-    ////
+    //Secret file open
+    encInfo->fptr_secret = fopen(encInfo->secret_fname,"r");
+    if(encInfo->fptr_secret == NULL){
+        printf("Error : Secret file not opened\n");
+        return e_failure;
+    }
 
-    -> open 'encInfo -> secret_fname' file in read mode
-        if(file not opened) -> print error and return e_failure
+    //Stego file open
+    encInfo->fptr_stego_image = fopen(encInfo->stego_image_fname,"w");
+    if(encInfo->fptr_stego_image == NULL){
+        printf("Error : Output file not opened\n");
+        return e_failure;
+    }
 
-    ////
-
-    -> open 'encInfo -> stego_image_fname' file in write mode
-        if(file not opened) -> print error and return e_failure
-
-        validation not needed but fptr_stego_image should be updated
-
-        -> call open)files(endInfo) == e)failure
-        return e_failure
-    if everything is fine
-        return e_success
-    */
-
+    return e_success;
 }
 
 
 Status do_encoding(EncodeInfo *encInfo)
 {
+    //capacity check for .bmp file and secret file
+    if(check_capacity(encInfo) == e_failure){
+        printf("Error : ");
+        return e_failure;
+    }
+
+    //copy .bmp header to stego
+    copy_bmp_header(encInfo->fptr_src_image,encInfo->fptr_stego_image)
+
     /*
         // call check_capacity(&encInfo) == e_failure
             print error msg, return e_failure
@@ -143,33 +124,30 @@ Status do_encoding(EncodeInfo *encInfo)
 
         -> call encode_secret_file_extn_size(encInfo) == e_failure
             print error, return e_failure
-
     */
 }
 
 
 Status check_capacity(EncodeInfo *encInfo)
 {
-    /*
-        0> call get_image_size_for_bmp(encode -> fptr_src_image)
-        encInfo -> image_capacity = get_iamge_size (upar wala)
+    //storing size of src.bmp file
+    encInfo->image_capacity = get_image_size_for_bmp(encInfo->fptr_src_image);
 
-        -> call get_file_size(encode -> fptr_secret);
-        size_secret_file = get_file_size(encode -> fptr_secret);
+    //storing size of secret file
+    encInfo->size_secret_file = get_file_size(encInfo->fptr_secret);
 
-        ->check (14 + size_secret_file * 8) > image_capacity
-            return e_failure;
-            
-        -> return e_success;
-    */
+    if(encInfo->image_capacity < (14 + encInfo->size_secret_file * 8)){
+        printf("Error : Secret file size is bigger than .bmp file\n");
+        return e_failure;
+    }
+
+    return e_success;
 }
 
 uint get_file_size(FILE *fptr)
 {
-    /*
-        -> move the offset to last pos using fseek
-        -> return ftell
-    */
+    fseek(fptr,0,SEEK_END);
+    return ftell(fptr);
 }
 
 
