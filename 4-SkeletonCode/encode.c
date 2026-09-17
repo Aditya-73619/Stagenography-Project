@@ -106,7 +106,7 @@ Status do_encoding(EncodeInfo *encInfo)
 {
     //capacity check for .bmp file and secret file
     if(check_capacity(encInfo) == e_failure){
-        printf("Error : ");
+        printf("Error : Insufficient image capacity to store secret file\n");
         return e_failure;
     }
 
@@ -123,7 +123,7 @@ Status do_encoding(EncodeInfo *encInfo)
     }
 
     if(encode_secret_file_extn_size(encInfo) == e_failure){
-        printf("Error : ");
+        printf("Error : Failed to encode secret file extension size\n");
         return e_failure;
     }
 
@@ -163,8 +163,7 @@ Status copy_bmp_header(FILE *fptr_src_image, FILE *fptr_dest_image)
     fread(buffer,54,1,fptr_src_image);
     fwrite(buffer,54,1,fptr_dest_image);
 
-    return e_success;
-    
+    return e_success;   
 }
 
 Status encode_magic_string(const char *magic_string, EncodeInfo *encInfo)
@@ -185,7 +184,6 @@ Status encode_byte_to_lsb(char data, char *image_buffer)
 {
     for(int i=7;i>=0;i--){
         if(data & (1<<i)){
-            image_buffer[7-i] = image_buffer[7-i] & ~1;
             image_buffer[7-i] = image_buffer[7-i] | 1;
         }
         else{
@@ -202,24 +200,30 @@ Status encode_secret_file_extn_size(EncodeInfo *encInfo)
     char *dot = strchr(encInfo->secret_fname,'.');
     strcpy(encInfo->extn_secret_file,dot);
 
-    char buffer[32];
+    char src_buffer[32];
 
     //read 32 bytes from src_file into buff
-    fread(buffer,32,1,encInfo->fptr_src_image);
+    fread(src_buffer,32,1,encInfo->fptr_src_image);
 
-    if(encode_size_to_lsb(strlen(encInfo->extn_secret_file),buffer) == e_failure){
+    if(encode_size_to_lsb(strlen(encInfo->extn_secret_file),src_buffer) == e_failure){
         printf("Error : Secret File extension encoding failed\n");
         return e_failure;
     }
 
-    fwrite(buffer,32,1,encInfo->fptr_stego_image);
+    fwrite(src_buffer,32,1,encInfo->fptr_stego_image);
 
     return e_success;
 }
 
 Status encode_size_to_lsb(int size,char *image_buffer)
 {
-    /*
+    for(int i=31;i>=0;i--){
+        if(size & (1<<i)){
+            image_buffer[31-i] = image_buffer[31-i] | 1;   //set
+        }
+        else    
+            image_buffer[31-i] = image_buffer[31-i] & ~1;   //clear
+    }
 
-    */
+    return e_success;
 }
