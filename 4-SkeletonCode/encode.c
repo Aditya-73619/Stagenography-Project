@@ -2,6 +2,7 @@
 #include<string.h>
 #include "encode.h"
 #include "types.h"
+#include "common.h"
 
 /* Function Definitions */
 
@@ -110,7 +111,17 @@ Status do_encoding(EncodeInfo *encInfo)
     }
 
     //copy .bmp header to stego
-    copy_bmp_header(encInfo->fptr_src_image,encInfo->fptr_stego_image)
+    if(copy_bmp_header(encInfo->fptr_src_image,encInfo->fptr_stego_image) == e_failure){
+        printf("Error : BMP Header not copied\n");
+        return e_failure;
+    }
+
+    //Encoding magic string(#*)
+    if(encode_magic_string(MAGIC_STRING,encInfo) == e_failure){
+        printf("Error : Unable to encode magic string\n");
+        return e_failure;
+    }
+
 
     /*
         // call check_capacity(&encInfo) == e_failure
@@ -153,40 +164,42 @@ uint get_file_size(FILE *fptr)
 
 Status copy_bmp_header(FILE *fptr_src_image, FILE *fptr_dest_image)
 {
-    rewind(fptr_src_image);
-    rewind(fptr_dest_image);
-    /*
-        declare the buffer  of 54 bytes
-        read 54 butes form src file
-        write those 54 butes to dest file
+    char buffer[54];
 
-        return e_success
-    */
+    rewind(fptr_src_image);
+
+    fread(buffer,54,1,fptr_src_image);
+    fwrite(buffer,54,1,fptr_dest_image);
+
+    return e_success;
+    
 }
 
 Status encode_magic_string(const char *magic_string, EncodeInfo *encInfo)
 {
-    /*
-        declare a buff of 8 bytes
-        for(int i=0;i<(length of magic string)2;i++){
-            read 8 bytes from the src file into buff
-            encode_byte_to_lsb(magic_string[1] (#), buff)
+    char buffer[8];
 
-            write the encoded buff to output.bmp file
-        }
-        -> return e_success
-    */
+    for(int i=0;i<2;i++){
+        fread(buffer,8,1,encInfo->fptr_src_image);
+        encode_byte_to_lsb(magic_string[i],buffer);
+
+        fwrite(buffer,8,1,encInfo->fptr_stego_image);
+    }
 }
 
 Status encode_byte_to_lsb(char data, char *image_buffer)
 {
     for(int i=7;i>=0;i--){
-        /*
-            get ith bit 
-            if set, set the LSB of image_buffer[7-i]
-            if clear, clear the LSB of image_buffer[7-i]
-        */
+        if(data & (1<<i)){
+            image_buffer[7-i] = image_buffer[7-i] & ~1;
+            image_buffer[7-i] = image_buffer[7-i] | 1;
+        }
+        else{
+            image_buffer[7-i] = image_buffer[7-i] & ~1;
+        }
     }
+
+    return e_success;
 }
 
 Status encode_secret_file_extn_size(EncodeInfo *encInfo)
