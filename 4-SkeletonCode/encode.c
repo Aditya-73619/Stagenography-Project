@@ -122,20 +122,12 @@ Status do_encoding(EncodeInfo *encInfo)
         return e_failure;
     }
 
+    if(encode_secret_file_extn_size(encInfo) == e_failure){
+        printf("Error : ");
+        return e_failure;
+    }
 
-    /*
-        // call check_capacity(&encInfo) == e_failure
-            print error msg, return e_failure
-
-        -> call copy_bmp_header(fptr_src_image(.bmp file), fptr_dest_image()) == e_failure
-            print error msg, return e_failure
-
-        -> call encode_magic_string(MAGIC_STRING,endInfo) == e_failure
-            print error, return e_failure
-
-        -> call encode_secret_file_extn_size(encInfo) == e_failure
-            print error, return e_failure
-    */
+    return e_success;
 }
 
 
@@ -178,13 +170,15 @@ Status copy_bmp_header(FILE *fptr_src_image, FILE *fptr_dest_image)
 Status encode_magic_string(const char *magic_string, EncodeInfo *encInfo)
 {
     char buffer[8];
-
+    
     for(int i=0;i<2;i++){
         fread(buffer,8,1,encInfo->fptr_src_image);
         encode_byte_to_lsb(magic_string[i],buffer);
 
         fwrite(buffer,8,1,encInfo->fptr_stego_image);
     }
+
+    return e_success;
 }
 
 Status encode_byte_to_lsb(char data, char *image_buffer)
@@ -204,15 +198,23 @@ Status encode_byte_to_lsb(char data, char *image_buffer)
 
 Status encode_secret_file_extn_size(EncodeInfo *encInfo)
 {
-    /*
-        -> char *dot = strchr(secret_file_name,'.')
-        -> strcpy(extn_secret_file,dot);
+    //copying the extension of secrete file to dot
+    char *dot = strchr(encInfo->secret_fname,'.');
+    strcpy(encInfo->extn_secret_file,dot);
 
-        -> declare a buff[32]
+    char buffer[32];
 
-        -> read 32 bytes from src_file into buff
-        -> call encode_size_to_lsb(strlen(extn_secret_file),data);
-    */
+    //read 32 bytes from src_file into buff
+    fread(buffer,32,1,encInfo->fptr_src_image);
+
+    if(encode_size_to_lsb(strlen(encInfo->extn_secret_file),buffer) == e_failure){
+        printf("Error : Secret File extension encoding failed\n");
+        return e_failure;
+    }
+
+    fwrite(buffer,32,1,encInfo->fptr_stego_image);
+
+    return e_success;
 }
 
 Status encode_size_to_lsb(int size,char *image_buffer)
