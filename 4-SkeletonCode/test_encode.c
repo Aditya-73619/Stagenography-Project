@@ -1,10 +1,12 @@
 #include <stdio.h>
 #include "encode.h"
+#include "decode.h"
 #include "types.h"
 
 int main(int argc,char *argv[])
 {
     EncodeInfo encInfo;
+    DecodeInfo decInfo;
     
     if(check_operation_type(argv[1][1]) == e_encode){
         
@@ -14,6 +16,15 @@ int main(int argc,char *argv[])
             if(do_encoding(&encInfo) == e_success){
                 printf("Encoding is success\n");
             }
+        }
+    }
+
+    if(check_operation_type(argv[1][1]) == e_decode){
+        if(read_and_validate_decode_args(argv,&decInfo) == e_failure)
+            return e_failure;
+        else{
+            if(do_decoding(&decInfo) == e_success)
+                printf("Decoding is success\n");
         }
     }
 
