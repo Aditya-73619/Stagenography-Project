@@ -13,9 +13,8 @@ int main(int argc,char *argv[])
         if(read_and_validate_encode_args(argv,&encInfo) == e_failure)
             return e_failure;
         else{
-            if(do_encoding(&encInfo) == e_success){
+            if(do_encoding(&encInfo) == e_success)
                 printf("Encoding is success\n");
-            }
         }
     }
 

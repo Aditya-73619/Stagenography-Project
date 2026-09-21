@@ -71,7 +71,7 @@ Status read_and_validate_encode_args(char *argv[], EncodeInfo *encInfo)
         printf("File not opened\n");
         return e_failure;
     }
-    
+
     return e_success;
 }
 
@@ -139,7 +139,7 @@ Status do_encoding(EncodeInfo *encInfo)
         printf("Error : Unable to encode Secret file size\n");
         return e_failure;
     }
-    
+
     //Encoding secret file data
     if(encode_secret_file_data(encInfo) == e_failure){
         printf("Error : Unable to encode Secret file data\n");
@@ -197,7 +197,7 @@ Status copy_bmp_header(FILE *fptr_src_image, FILE *fptr_dest_image)
 Status encode_magic_string(const char *magic_string, EncodeInfo *encInfo)
 {
     char buffer[8];
-    
+
     for(int i=0;i<2;i++){
         if(fread(buffer,8,1,encInfo->fptr_src_image) == 0)
             return e_failure;
