@@ -24,12 +24,8 @@ Status read_and_validate_decode_args(char *argv[],DecodeInfo *decInfo)
         strcpy(decInfo->decode_fname,"decode.txt");
     }
     else{
-        char decode_name[50];
-
         //storing name of decode file till '.'
-        sscanf(argv[3],"%[^.]",decode_name);
-
-        strcpy(decInfo->decode_fname,decode_name);
+        sscanf(argv[3],"%[^.]",decInfo->decode_fname);
         strcat(decInfo->decode_fname,".txt");   //storing .txt in the end
     }
 

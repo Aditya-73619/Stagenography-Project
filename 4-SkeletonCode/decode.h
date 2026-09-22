@@ -4,8 +4,6 @@
 #include<stdio.h>
 #include "types.h"
 
-#define MAX_SECRET_BUF_SIZE 1
-#define MAX_IMAGE_BUF_SIZE (MAX_SECRET_BUF_SIZE * 8)
 #define MAX_FILE_SUFFIX 5
 
 typedef struct _DecodeInfo
@@ -13,7 +11,6 @@ typedef struct _DecodeInfo
     /* Output secret file info(decode.txt) */
     char decode_fname[50];
     FILE *fptr_decode;
-    char decode_data[MAX_SECRET_BUF_SIZE];
     
     /* Secret file info */
     int secret_file_extn_size;
