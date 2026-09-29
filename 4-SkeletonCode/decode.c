@@ -9,7 +9,7 @@
 Status read_and_validate_decode_args(char *argv[],DecodeInfo *decInfo)
 {
     //command validation
-    if(argv[2] == NULL || argv[3] == NULL){
+    if(argv[2] == NULL){
         printf("./a.out -d stego.bmp [decoded.txt]\n");
         return e_failure;
     }
